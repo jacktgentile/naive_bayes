@@ -9,22 +9,28 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 
 using std::string;
 using std::vector;
 using std::ifstream;
+using std::pair;
+using std::make_pair;
 
 using std::cout;
 using std::cin;
 using std::endl;
+using std::fixed;
+using std::setprecision;
 
 const int image_width = 28;
 const int image_height = 28;
 
 vector<bool> empty_bool_vector(image_width, false);
-vector<vector<bool>> empty_2d_bool_vector(image_height, empty_bool_vector);
+vector<vector<bool>> empty_2d_bool_vector(image_height, vector<bool>(image_width, false));
 
 vector<int> empty_int_vector(image_width, 0);
-vector<vector<int>> empty_2d_int_vector(image_height, empty_int_vector);
+vector<vector<int>> empty_2d_int_vector(image_height, vector<int>(image_width, 0));
+
 
 #endif //NAIVEBAYES_NAIVEBAYES_H
