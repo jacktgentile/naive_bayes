@@ -2,7 +2,6 @@
 // Created by jackt on 3/8/2018.
 //
 #include "naivebayes.h"
-#include "train_and_test.h"
 
 vector<vector<bool>> convert_next_image();
 vector<n_tuple> train(string image_filename, string label_filename);
@@ -12,32 +11,88 @@ vector<vector<float>> test(string image_filename, string label_filename);
 ifstream fin1;
 ifstream fin2;
 const double laplace_factor = 1.0;
-vector<n_tuple> model;
+vector<n_tuple> model(10, make_tuple(0, 0, empty_2d_int_vector));
 
 int main() {
+    string input;
     string image_filename;
     string label_filename;
-    cout << "Training image file name: ";
-    cin >> image_filename;
-    cout << "Training label file name: ";
-    cin  >> label_filename;
-    //store results from training files in model
-    model = train(image_filename, label_filename);
-    cout << "Training complete\nTesting image file name: ";
-    cin >> image_filename;
-    cout << "Testing label file name: ";
-    cin >> label_filename;
-    //assign 2d confusion matrix as per specification
-    vector<vector<float>> confusion_matrix = test(image_filename, label_filename);
-    cout << endl;
-    for (int i = 0; i < confusion_matrix.size(); i++) {
-        for (int j = 0; j < confusion_matrix[i].size(); j++) {
-            //http://www.cplusplus.com/reference/iomanip/setprecision/
-            cout << fixed << setprecision(1) << confusion_matrix[i][j] << '\t';
+    cout << "load or train a new model: ";
+    while (true) {
+        cin >> input;
+        if (input == "load") {
+            ifstream ifs;
+            ifs.open("model.txt");
+            for (int k = 0; k < model.size(); k++) {
+                int temp;
+                ifs >> temp;
+                get<0>(model[k]) = temp;
+                ifs >> temp;
+                get<1>(model[k]) = temp;
+                for (int i = 0; i < get<2>(model[k]).size(); i++) {
+                    for (int j = 0; j < get<2>(model[k])[i].size(); j++) {
+                        ifs >> temp;
+                        auto temp_2d_vector = get<2>(model[k]);
+                        temp_2d_vector[i][j] = temp;
+                        get<2>(model[k]) = temp_2d_vector;
+                    }
+                }
+            }
+            ifs.close();
+            cout << "Loaded!" << endl;
+            break;
+        } else if (input == "train"){
+            cout << "Training image file name: ";
+            cin >> image_filename;
+            cout << "Training label file name: ";
+            cin  >> label_filename;
+            //store results from training files in model
+            model = train(image_filename, label_filename);
+            cout << "Training complete" << endl;
+            break;
         }
-        cout << endl << endl;
+        cout << "Invalid input, enter \"load\" or \"train\": ";
     }
-    return 0;
+    while (true) {
+        cout << "You can test, save your model, or exit: ";
+        cin >> input;
+        if (input == "test") {
+            cout << "Testing image file name: ";
+            cin >> image_filename;
+            cout << "Testing label file name: ";
+            cin >> label_filename;
+            //assign 2d confusion matrix as per specification
+            vector<vector<float>> confusion_matrix = test(image_filename, label_filename);
+            cout << endl;
+            for (int i = 0; i < confusion_matrix.size(); i++) {
+                for (int j = 0; j < confusion_matrix[i].size(); j++) {
+                    //http://www.cplusplus.com/reference/iomanip/setprecision/
+                    cout << fixed << setprecision(1) << confusion_matrix[i][j] << "  \t";
+                }
+                cout << endl << endl;
+            }
+        } else if (input == "save") {
+            ofstream ofs;
+            //https://stackoverflow.com/questions/17032970/clear-data-inside-text-file-in-c
+            ofs.open("model.txt", ofstream::out | ofstream::trunc);
+            for (n_tuple current_tuple : model) {
+                ofs << get<0>(current_tuple) << " " << get<1>(current_tuple) << " ";
+                for (vector<int> current_vector : get<2>(current_tuple)) {
+                    for (int counter : current_vector) {
+                        ofs << counter << " ";
+                    }
+                    ofs << " ";
+                }
+                ofs << " ";
+            }
+            ofs.close();
+            cout << "Saved!" << endl;
+        } else if (input == "exit") {
+            return 0;
+        } else {
+            cout << "Please type \"test\", \"save\", or \"exit\": ";
+        }
+    }
 }
 
 //return confusion matrix for test
@@ -99,8 +154,6 @@ pair<int, double> classify(vector<vector<bool>> image) {
     }
     return best_probability;
 }
-
-
 
 //return vector of n_tuples that model information from the training files
 vector<n_tuple> train(string image_filename, string label_filename) {
